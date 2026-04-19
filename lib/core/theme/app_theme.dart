@@ -118,6 +118,13 @@ class AppTheme {
     end: Alignment.bottomCenter,
   );
 
+  // Nav bar / header gradient (dark, semi-transparent)
+  static const LinearGradient navBarGradient = LinearGradient(
+    colors: [Color(0xFF0B1445), Color(0xFF050B2D)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   static const LinearGradient surfaceGradient = LinearGradient(
     colors: [Color(0xFF050B2D), Color(0xFF0B1445)],
     begin: Alignment.topCenter,

@@ -14,7 +14,7 @@ import 'package:local_connect/features/home/screens/home_screen.dart';
 import 'package:local_connect/features/chat/screens/messages_screen.dart';
 import 'package:local_connect/features/booking/screens/bookings_screen.dart';
 import 'package:local_connect/features/profile/screens/profile_screen.dart';
-import 'package:local_connect/features/jobs/screens/requests_screen.dart';
+import 'package:local_connect/features/jobs/screens/jobs_screen.dart';
 
 class MainShell extends StatefulWidget {
   final String pincode;
@@ -34,7 +34,7 @@ class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
     _screens = [
       HomeScreen(pincode: widget.pincode),
       const MessagesScreen(),
-      const RequestsScreen(),
+      const JobsScreen(),
       const BookingsScreen(),
       const ProfileScreen(),
     ];
@@ -124,9 +124,9 @@ class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
                 isCompact: isCompact,
               ),
               _NavItem(
-                icon: Icons.assignment_outlined,
-                activeIcon: Icons.assignment_rounded,
-                label: 'Requests',
+                icon: Icons.work_outline_rounded,
+                activeIcon: Icons.work_rounded,
+                label: 'Jobs',
                 isActive: _currentIndex == 2,
                 onTap: () => _onTab(2),
                 isCenter: true,

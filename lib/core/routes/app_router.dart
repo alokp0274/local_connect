@@ -49,6 +49,12 @@ import 'package:local_connect/features/jobs/screens/open_jobs_screen.dart';
 import 'package:local_connect/features/jobs/screens/request_detail_screen.dart';
 import 'package:local_connect/features/jobs/models/job_post_model.dart';
 
+// ── Jobs Feed (Marketplace) ──
+import 'package:local_connect/features/jobs/screens/job_detail_screen.dart';
+import 'package:local_connect/features/jobs/screens/post_job_screen.dart';
+import 'package:local_connect/features/jobs/screens/job_search_screen.dart';
+import 'package:local_connect/features/jobs/models/job_model.dart' as jobfeed;
+
 // ── Provider Side ──
 import 'package:local_connect/features/provider_mode/screens/provider_dashboard_screen.dart';
 
@@ -86,6 +92,9 @@ class AppRoutes {
   static const String myRequests = '/my-requests';
   static const String openJobs = '/open-jobs';
   static const String requestDetail = '/request-detail';
+  static const String jobDetail = '/job-detail';
+  static const String postJob = '/post-job';
+  static const String jobSearch = '/job-search';
 
   /// Generate route based on [RouteSettings].
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -165,6 +174,13 @@ class AppRoutes {
       case requestDetail:
         final jobPost = settings.arguments as JobPost;
         return _depthSlide(RequestDetailScreen(jobPost: jobPost));
+      case jobDetail:
+        final jobModel = settings.arguments as jobfeed.JobPost;
+        return _depthSlide(JobDetailScreen(job: jobModel));
+      case postJob:
+        return _depthSlide(const PostJobScreen());
+      case jobSearch:
+        return _slide(const JobSearchScreen());
       default:
         return _fade(const SplashScreen());
     }
