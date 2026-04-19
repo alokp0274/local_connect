@@ -1,0 +1,309 @@
+// features/home/widgets/location_selector_sheet.dart
+// Feature: Home & Dashboard
+//
+// Bottom sheet to select or change the user's pincode/location.
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+
+import 'package:local_connect/core/theme/app_theme.dart';
+import 'package:local_connect/shared/widgets/glass_container.dart';
+
+/// Shows premium location/pincode selector bottom sheet.
+/// Returns selected pincode string or null.
+Future<String?> showLocationSelectorSheet(
+  BuildContext context, {
+  required String currentPincode,
+}) {
+  return showModalBottomSheet<String>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black54,
+    builder: (_) => _LocationSelectorContent(currentPincode: currentPincode),
+  );
+}
+
+class _LocationSelectorContent extends StatefulWidget {
+  final String currentPincode;
+  const _LocationSelectorContent({required this.currentPincode});
+  @override
+  State<_LocationSelectorContent> createState() => _LocationSelectorContentState();
+}
+
+class _LocationSelectorContentState extends State<_LocationSelectorContent> {
+  final _controller = TextEditingController();
+  final _focusNode = FocusNode();
+  bool _detecting = false;
+
+  static const _recentLocations = [
+    _PinLocation('110001', 'Connaught Place, New Delhi'),
+    _PinLocation('110025', 'Okhla Phase 1, New Delhi'),
+    _PinLocation('110017', 'Malviya Nagar, New Delhi'),
+  ];
+
+  static const _savedAreas = [
+    _PinLocation('110001', 'Home - Connaught Place'),
+    _PinLocation('110020', 'Office - Hauz Khas'),
+  ];
+
+  static const _popularPincodes = [
+    _PinLocation('110001', 'Connaught Place'),
+    _PinLocation('110025', 'Okhla'),
+    _PinLocation('110017', 'Malviya Nagar'),
+    _PinLocation('110020', 'Hauz Khas'),
+    _PinLocation('110019', 'Kalkaji'),
+    _PinLocation('110049', 'East of Kailash'),
+    _PinLocation('110048', 'Nehru Place'),
+    _PinLocation('110044', 'Laxmi Nagar'),
+  ];
+
+  @override
+  void dispose() { _controller.dispose(); _focusNode.dispose(); super.dispose(); }
+
+  void _select(String pincode) {
+    HapticFeedback.selectionClick();
+    Navigator.of(context).pop(pincode);
+  }
+
+  Future<void> _detectLocation() async {
+    HapticFeedback.mediumImpact();
+    setState(() => _detecting = true);
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+    if (!mounted) return;
+    setState(() => _detecting = false);
+    _select('110001');
+  }
+
+  void _submitPincode() {
+    final pin = _controller.text.trim();
+    if (pin.length == 6 && RegExp(r'^\d{6}$').hasMatch(pin)) {
+      _select(pin);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+    final tt = Theme.of(context).textTheme;
+    final screenH = MediaQuery.of(context).size.height;
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: screenH * 0.85),
+      margin: EdgeInsets.only(bottom: bottom),
+      decoration: const BoxDecoration(
+        color: AppTheme.primaryDark,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border(top: BorderSide(color: AppTheme.border, width: 0.5)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle
+              Center(child: Container(width: 40, height: 4,
+                decoration: BoxDecoration(color: AppTheme.border, borderRadius: BorderRadius.circular(2)))),
+              const SizedBox(height: 16),
+              // Title
+              Row(children: [
+                const Icon(Icons.location_on_rounded, color: AppTheme.accentGold, size: 22),
+                const SizedBox(width: 10),
+                Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Change Location', style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                    Text('Current: PIN ${widget.currentPincode}', style: tt.bodySmall?.copyWith(color: AppTheme.textMuted)),
+                  ],
+                )),
+                IconButton(onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded, color: AppTheme.textMuted), splashRadius: 20),
+              ]),
+              const SizedBox(height: 18),
+
+              // Pincode input
+              Row(children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller, focusNode: _focusNode,
+                    keyboardType: TextInputType.number, maxLength: 6,
+                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 2),
+                    onSubmitted: (_) => _submitPincode(),
+                    decoration: InputDecoration(
+                      hintText: 'Enter PIN code',
+                      hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 14, letterSpacing: 0),
+                      counterText: '', filled: true, fillColor: AppTheme.surfaceElevated,
+                      prefixIcon: const Icon(Icons.pin_drop_rounded, color: AppTheme.accentGold, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                        borderSide: const BorderSide(color: AppTheme.border, width: 0.5)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                        borderSide: const BorderSide(color: AppTheme.border, width: 0.5)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                        borderSide: const BorderSide(color: AppTheme.accentGold, width: 1)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: _submitPincode,
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.primaryGradient,
+                      borderRadius: BorderRadius.circular(AppTheme.radiusSM)),
+                    child: const Icon(Icons.arrow_forward_rounded, color: AppTheme.textOnAccent, size: 20),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 14),
+
+              // Detect location
+              GestureDetector(
+                onTap: _detecting ? null : _detectLocation,
+                child: GlassContainer(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                  color: AppTheme.accentBlue.withAlpha(12),
+                  border: Border.all(color: AppTheme.accentBlue.withAlpha(60)),
+                  child: Row(children: [
+                    _detecting
+                      ? const SizedBox(width: 18, height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accentBlue))
+                      : const Icon(Icons.my_location_rounded, color: AppTheme.accentBlue, size: 18),
+                    const SizedBox(width: 10),
+                    Text(_detecting ? 'Detecting your location...' : 'Use current location',
+                      style: const TextStyle(color: AppTheme.accentBlue, fontSize: 13, fontWeight: FontWeight.w600)),
+                  ]),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Recent locations
+              _sectionLabel(tt, 'Recent Locations'),
+              const SizedBox(height: 8),
+              ...List.generate(_recentLocations.length, (i) {
+                final loc = _recentLocations[i];
+                return _LocationTile(
+                  pincode: loc.pincode, label: loc.label,
+                  icon: Icons.history_rounded,
+                  isActive: loc.pincode == widget.currentPincode,
+                  onTap: () => _select(loc.pincode),
+                ).animate(delay: (i * 40).ms).fadeIn(duration: 200.ms);
+              }),
+              const SizedBox(height: 16),
+
+              // Saved areas
+              _sectionLabel(tt, 'Saved Areas'),
+              const SizedBox(height: 8),
+              ...List.generate(_savedAreas.length, (i) {
+                final loc = _savedAreas[i];
+                return _LocationTile(
+                  pincode: loc.pincode, label: loc.label,
+                  icon: Icons.bookmark_rounded,
+                  isActive: loc.pincode == widget.currentPincode,
+                  onTap: () => _select(loc.pincode),
+                ).animate(delay: (i * 40).ms).fadeIn(duration: 200.ms);
+              }),
+              const SizedBox(height: 16),
+
+              // Popular pincodes
+              _sectionLabel(tt, 'Popular Nearby'),
+              const SizedBox(height: 10),
+              Wrap(spacing: 8, runSpacing: 8,
+                children: List.generate(_popularPincodes.length, (i) {
+                  final loc = _popularPincodes[i];
+                  final isActive = loc.pincode == widget.currentPincode;
+                  return GestureDetector(
+                    onTap: () => _select(loc.pincode),
+                    child: AnimatedContainer(
+                      duration: AppTheme.durationFast,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        gradient: isActive ? AppTheme.primarySubtleGradient : null,
+                        color: isActive ? null : AppTheme.surfaceCard,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+                        border: Border.all(
+                          color: isActive ? AppTheme.accentGold.withAlpha(120) : AppTheme.border, width: 0.5)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Text(loc.pincode, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
+                          color: isActive ? AppTheme.accentGold : AppTheme.textPrimary)),
+                        const SizedBox(width: 5),
+                        Text(loc.label, style: TextStyle(fontSize: 11,
+                          color: isActive ? AppTheme.accentGold.withAlpha(180) : AppTheme.textMuted)),
+                      ]),
+                    ),
+                  ).animate(delay: (i * 30).ms).fadeIn(duration: 200.ms);
+                }),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(TextTheme tt, String text) =>
+    Text(text, style: tt.labelLarge?.copyWith(color: AppTheme.textMuted, fontSize: 12));
+}
+
+class _LocationTile extends StatelessWidget {
+  final String pincode;
+  final String label;
+  final IconData icon;
+  final bool isActive;
+  final VoidCallback onTap;
+  const _LocationTile({required this.pincode, required this.label,
+    required this.icon, required this.onTap, this.isActive = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isActive ? AppTheme.accentGold.withAlpha(10) : AppTheme.surfaceCard,
+          borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+          border: Border.all(color: isActive ? AppTheme.accentGold.withAlpha(80) : AppTheme.border, width: 0.5)),
+        child: Row(children: [
+          Icon(icon, size: 16, color: isActive ? AppTheme.accentGold : AppTheme.textMuted),
+          const SizedBox(width: 10),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                  color: isActive ? AppTheme.accentGold : AppTheme.textPrimary)),
+              Text('PIN $pincode', style: TextStyle(fontSize: 11,
+                color: isActive ? AppTheme.accentGold.withAlpha(160) : AppTheme.textMuted)),
+            ],
+          )),
+          if (isActive) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppTheme.accentGold.withAlpha(20),
+                borderRadius: BorderRadius.circular(AppTheme.radiusFull)),
+              child: const Text('Current', style: TextStyle(
+                color: AppTheme.accentGold, fontSize: 9, fontWeight: FontWeight.w700)),
+            ),
+          ] else
+            const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted, size: 18),
+        ]),
+      ),
+    );
+  }
+}
+
+class _PinLocation {
+  final String pincode;
+  final String label;
+  const _PinLocation(this.pincode, this.label);
+}
